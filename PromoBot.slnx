@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/PromoBot.Application/PromoBot.Application.csproj" />
+  <Project Path="src/PromoBot.Domain/PromoBot.Domain.csproj" />
+  <Project Path="src/PromoBot.Infrastructure/PromoBot.Infrastructure.csproj" />
+  <Project Path="src/PromoBot.Worker/PromoBot.Worker.csproj" />
+</Solution>
