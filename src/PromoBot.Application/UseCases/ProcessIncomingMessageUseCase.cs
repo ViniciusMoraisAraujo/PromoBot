@@ -26,21 +26,21 @@ public class ProcessIncomingMessageUseCase(
             _logger.LogInformation("Received empty message from Chat {ChatId} (Id: {MessageId})", chatId, messageId);
             return;
         }
+
+        var lazyPrice = new Lazy<decimal?>(() => PriceExtractor.Extract(messageText));
+        var matchedRule = _filterRules.FirstOrDefault(rule => rule.Matches(messageText, () => lazyPrice.Value));
+
+        if (matchedRule is null)
+        {
+            _logger.LogInformation("Message from Chat {ChatId} (Id: {MessageId}) does not match any filter rules", chatId, messageId);
+            return;
+        }
         
         var alreadyExists = await _promotionRepository.ExistsAsync(chatId, messageId, ct);
 
         if (alreadyExists)
         {
             _logger.LogInformation("Promotion already exists for Chat {ChatId} (Id: {MessageId})", chatId, messageId);
-            return;
-        }
-        
-        var lazyPrice = new Lazy<decimal?>(() => PriceExtractor.Extract(messageText));
-        var matchedRule = _filterRules.FirstOrDefault(rule => rule.Matches(messageText, () => lazyPrice.Value));       
-        
-        if (matchedRule is null)
-        {
-            _logger.LogInformation("Message from Chat {ChatId} (Id: {MessageId}) does not match any filter rules", chatId, messageId);
             return;
         }
 
@@ -52,7 +52,7 @@ public class ProcessIncomingMessageUseCase(
             messageId,
             chatId,
             messageText,
-            DateTime.UtcNow,
+            DateTime.Now,
             url,
             lazyPrice.Value
         );
