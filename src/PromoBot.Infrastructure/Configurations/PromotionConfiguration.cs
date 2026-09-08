@@ -36,8 +36,8 @@ public class PromotionConfiguration : IEntityTypeConfiguration<Promotion>
             .HasColumnName("PromotionDate")
             .IsRequired();
         
-        builder.Property(p => p.Value)
-            .HasColumnName("Value")
+        builder.Property(p => p.Price)
+            .HasColumnName("Price")
             .HasColumnType("decimal(18,2)")
             .IsRequired(false);
         
