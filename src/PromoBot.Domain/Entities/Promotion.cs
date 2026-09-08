@@ -8,7 +8,7 @@ public class Promotion
     public string Description { get; private set; } = string.Empty;
     public string? Url { get; private set; } = string.Empty;
     public DateTime PromotionDate { get; private set; } = DateTime.Now;
-    public decimal? Value { get; private set; }
+    public decimal? Price { get; private set; }
     public bool IsNotify { get; private set; }
 
     protected Promotion()
@@ -16,14 +16,14 @@ public class Promotion
         //required for ef
     }
     
-    public Promotion(int messageId, long chatId,string description, string url, DateTime promotionDate, decimal? value)
+    public Promotion(int messageId, long chatId,string description, DateTime promotionDate, string? url, decimal? price)
     {
         MessageId = messageId;
         ChatId = chatId;
         Description = description;
-        Url = url;
         PromotionDate = promotionDate;
-        Value = value;
+        Url = url;
+        Price = price;
         IsNotify = false;
     }
 
