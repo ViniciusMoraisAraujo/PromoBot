@@ -15,9 +15,20 @@ public class TelegramGateway : ITelegramGateway
     public TelegramGateway(IOptions<TelegramSettings> settings)
     {
         _settings = settings.Value;
-        _targetChatIds = [.. settings.Value.TargetChatIds];
+        _targetChatIds = settings.Value.TargetChatIds
+            .Select(NormalizeChatId)
+            .ToHashSet();
 
         _client = new WTelegram.Client(ConfigResolver);
+    }
+
+    private static long NormalizeChatId(long id)
+    {
+        string idStr = id.ToString();
+        if (idStr.StartsWith("-100"))
+            return long.Parse(idStr[4..]);
+
+        return Math.Abs(id);
     }
 
     private string? ConfigResolver(string key) => key switch
@@ -45,18 +56,26 @@ public class TelegramGateway : ITelegramGateway
     {
         try
         {
-            var (peerId, msgId, text) = update switch
-            {
-                UpdateNewChannelMessage { message: Message m } => (m.Peer?.ID, m.id, m.message),
-                UpdateNewMessage { message: Message m } => (m.Peer?.ID, m.id, m.message),
-                _ => (null, 0, null)
-            };
-
-            if (peerId is null || string.IsNullOrWhiteSpace(text))
+            if (update is not UpdatesBase updates)
                 return;
 
-            if (_targetChatIds.Contains(peerId.Value) && OnMessageReceived is not null)
-                await OnMessageReceived.Invoke(peerId.Value, msgId, text);
+            foreach (var u in updates.UpdateList)
+            {
+                var (peerId, msgId, text) = u switch
+                {
+                    UpdateNewChannelMessage { message: Message m } => (m.Peer?.ID, m.id, m.message),
+                    UpdateNewMessage { message: Message m } => (m.Peer?.ID, m.id, m.message),
+                    _ => (null, 0, null)
+                };
+
+                if (peerId is null || string.IsNullOrWhiteSpace(text))
+                    continue;
+
+                if (_targetChatIds.Contains(peerId.Value) && OnMessageReceived is not null)
+                {
+                    await OnMessageReceived.Invoke(peerId.Value, msgId, text);
+                }
+            }
         }
         catch (Exception ex)
         {
