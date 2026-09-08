@@ -5,7 +5,7 @@ namespace PromoBot.Application.Parsers;
 
 public static partial class PriceExtractor
 {
-    [GeneratedRegex(@"(?:R\$\s?)(?<valor>(?:\d{1,3}(?:\.\d{3})*|\d+)(?:,\d{2})?)", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"(?:R\$\s?)(?<valor>(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{2})?)", RegexOptions.IgnoreCase)]
     private static partial Regex PricePattern();
 
     private static readonly CultureInfo PtBrCulture = CultureInfo.GetCultureInfo("pt-BR");
@@ -15,7 +15,7 @@ public static partial class PriceExtractor
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
-        var match = PricePattern().Match(text);
+        Match match = PricePattern().Match(text);
 
         if (!match.Success)
             return null;
