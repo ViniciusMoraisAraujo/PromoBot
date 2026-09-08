@@ -19,4 +19,10 @@ public class PromotionRepository(PromoBotDataContext context) : IPromotionReposi
         return await _context.Promotions
             .AnyAsync(p => p.ChatId == chatId && p.MessageId == messageId, ct);
     }
+
+    public async Task UpdateAsync(Promotion promotion, CancellationToken ct)
+    {
+        _context.Promotions.Update(promotion);
+        await _context.SaveChangesAsync(ct);
+    }
 }
