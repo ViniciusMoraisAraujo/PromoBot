@@ -15,18 +15,36 @@ public static partial class PriceExtractor
         if (string.IsNullOrWhiteSpace(text))
             return null;
 
-        Match match = PricePattern().Match(text);
-
-        if (!match.Success)
+        var matches = PricePattern().Matches(text);
+        
+        if (matches.Count == 0)
             return null;
 
-        string rawValue = match.Groups["valor"].Value;
-
-        if (decimal.TryParse(rawValue, NumberStyles.Number, PtBrCulture, out decimal price))
+        foreach (Match match in matches)
         {
-            return price;
-        }
+            int start = Math.Max(0, match.Index - 25);
+            string beforeContext = text[start..match.Index];
 
+            int end = Math.Min(text.Length, match.Index + match.Length + 15);
+            string afterContext = text[(match.Index + match.Length)..end];
+
+            bool isCouponBefore = beforeContext.Contains("cupom", StringComparison.OrdinalIgnoreCase) ||
+                                  beforeContext.Contains("desconto de", StringComparison.OrdinalIgnoreCase);
+
+            bool isDiscountAfter = afterContext.Contains("off", StringComparison.OrdinalIgnoreCase) ||
+                                   afterContext.Contains("de desconto", StringComparison.OrdinalIgnoreCase);
+
+            if (isCouponBefore || isDiscountAfter)
+            {
+                continue; 
+            }
+
+            string rawValue = match.Groups["valor"].Value;
+            if (decimal.TryParse(rawValue, NumberStyles.Number, PtBrCulture, out decimal price))
+            {
+                return price;
+            }
+        }
         return null;
     }
 }
