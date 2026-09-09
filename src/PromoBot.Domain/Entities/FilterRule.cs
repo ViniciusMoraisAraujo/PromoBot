@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text;
+
 namespace PromoBot.Domain.Entities;
 
 public record FilterRule
@@ -19,8 +22,11 @@ public record FilterRule
     {
         if (string.IsNullOrWhiteSpace(messageText) || string.IsNullOrWhiteSpace(KeyWord))
             return false;
-        
-        bool containsText = messageText.Contains(KeyWord, StringComparison.OrdinalIgnoreCase);
+
+        var normalizedMessage = RemoveDiacritics(messageText);
+        var key = RemoveDiacritics(KeyWord);
+        bool containsText = normalizedMessage
+            .Contains(key, StringComparison.OrdinalIgnoreCase);
         
         if (!containsText)
             return false;
@@ -33,5 +39,19 @@ public record FilterRule
             return true;
         
         return extractedPrice.Value <= MaxPrice.Value;
+    }
+    
+    private static string RemoveDiacritics(string text)
+    {
+        string normalized = text.Normalize(NormalizationForm.FormD);
+        var sb = new StringBuilder(normalized.Length);
+
+        foreach (char c in normalized)
+        {
+            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+
+        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 }
