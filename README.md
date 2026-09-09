@@ -180,7 +180,7 @@ Crie ou edite o arquivo `src/PromoBot.Worker/appsettings.json` (ou utilize *User
   ],
   "TelegramBot": {
     "BotToken": "1234567890:ABCdefGHIjklMNOpqrsTUVwxyz",
-    "ChatId": "1409172366"
+    "ChatId": "1402020220"
   }
 }
 ```
