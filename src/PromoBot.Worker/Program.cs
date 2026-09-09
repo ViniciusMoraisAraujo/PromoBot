@@ -18,7 +18,7 @@ builder.Services.Configure<List<FilterRule>>(
 builder.Services.AddDbContextPool<PromoBotDataContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-WTelegram.Helpers.Log = (level, message) =>
+WTelegram.Helpers.Log = (_, message) =>
 {
     var localMessage = Regex.Replace(message, @"\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}Z", match =>
     {
@@ -34,6 +34,7 @@ WTelegram.Helpers.Log = (level, message) =>
 
 builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
 
+builder.Services.AddScoped<INotifier, SavedMessagesNotifier>();
 builder.Services.AddScoped<INotifier, TelegramBotNotifier>();
 
 builder.Services.AddSingleton<ITelegramGateway, TelegramGateway>();
