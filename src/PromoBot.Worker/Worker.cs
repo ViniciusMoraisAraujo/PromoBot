@@ -1,5 +1,6 @@
 using PromoBot.Application.Interfaces;
 using PromoBot.Application.UseCases;
+using PromoBot.Domain.Models;
 
 namespace PromoBot.Worker;
 
@@ -11,8 +12,6 @@ public class Worker(ILogger<Worker> logger, ITelegramGateway telegramGateway, IS
    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
    {
       _logger.LogInformation("PromoBot Worker run...");
-
-      _telegramGateway.OnMessageReceived += HandleMessageReceivedAsync;
       
       await _telegramGateway.StartAsync(stoppingToken);
       
@@ -20,7 +19,10 @@ public class Worker(ILogger<Worker> logger, ITelegramGateway telegramGateway, IS
 
       try
       {
-         await Task.Delay(Timeout.Infinite, stoppingToken);
+         await foreach (var msg in _telegramGateway.Messages.ReadAllAsync(stoppingToken))
+         {
+            await ProcessMessageAsync(msg, stoppingToken);
+         }
       }
       catch (Exception e)
       {
@@ -43,6 +45,21 @@ public class Worker(ILogger<Worker> logger, ITelegramGateway telegramGateway, IS
       catch (Exception ex)
       {
          _logger.LogInformation(ex, "Erro ao processar mensagem {MessageId} do Chat {ChatId}", messageId, chatId);
+      }
+   }
+   
+   private async Task ProcessMessageAsync(IncomingMessage msg, CancellationToken ct)
+   {
+      _logger.LogInformation("Consumindo mensagem do Chat {ChatId} (Id: {MessageId})", msg.ChatId, msg.MessageId);
+      try
+      {
+         using var scope = _scopeFactory.CreateScope();
+         var useCase = scope.ServiceProvider.GetRequiredService<ProcessIncomingMessageUseCase>();
+         await useCase.ExecuteAsync(msg.ChatId, msg.MessageId, msg.Text, ct);
+      }
+      catch (Exception ex)
+      {
+         _logger.LogError(ex, "Erro ao processar mensagem {MessageId} do Chat {ChatId}", msg.MessageId, msg.ChatId);
       }
    }
 }
