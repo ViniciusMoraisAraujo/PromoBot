@@ -1,6 +1,9 @@
+using System.Threading.Channels;
 using Microsoft.Extensions.Options;
 using PromoBot.Application.Interfaces;
+using PromoBot.Domain.Models;
 using TL;
+using Channel = System.Threading.Channels.Channel;
 
 namespace PromoBot.Infrastructure.Telegram;
 
@@ -10,8 +13,16 @@ public class TelegramGateway : ITelegramGateway
     private readonly HashSet<long> _targetChatIds;
     private readonly WTelegram.Client _client;
 
-    public event Func<long, int, string, Task>? OnMessageReceived;
 
+    private readonly Channel<IncomingMessage> _channel = Channel.CreateUnbounded<IncomingMessage>(
+        new UnboundedChannelOptions
+        {
+            SingleWriter = true,
+            SingleReader = false
+        });
+    
+    public ChannelReader<IncomingMessage>  Messages => _channel.Reader;
+    
     public TelegramGateway(IOptions<TelegramSettings> settings)
     {
         _settings = settings.Value;
@@ -44,7 +55,7 @@ public class TelegramGateway : ITelegramGateway
     public async Task StartAsync(CancellationToken ct = default)
     {
         await _client.LoginUserIfNeeded();
-        _client.OnUpdates += HandleUpdateAsync;
+        _client.OnUpdates += HandleUpdate;
     }
 
     public async Task SendToSavedMessagesAsync(string message, CancellationToken ct = default)
@@ -52,12 +63,12 @@ public class TelegramGateway : ITelegramGateway
         await _client.SendMessageAsync(InputPeer.Self, message);
     }
 
-    private async Task HandleUpdateAsync(IObject update)
+    private Task HandleUpdate(IObject update)
     {
         try
         {
             if (update is not UpdatesBase updates)
-                return;
+                return Task.CompletedTask;
 
             foreach (var u in updates.UpdateList)
             {
@@ -71,9 +82,9 @@ public class TelegramGateway : ITelegramGateway
                 if (peerId is null || string.IsNullOrWhiteSpace(text))
                     continue;
 
-                if (_targetChatIds.Contains(peerId.Value) && OnMessageReceived is not null)
+                if (_targetChatIds.Contains(peerId.Value))
                 {
-                    await OnMessageReceived.Invoke(peerId.Value, msgId, text);
+                    _channel.Writer.TryWrite(new IncomingMessage(peerId.Value, msgId, text));
                 }
             }
         }
@@ -82,5 +93,7 @@ public class TelegramGateway : ITelegramGateway
             // TODO: logar de verdade (ILogger) — não deixar update engolir exceção silenciosa
             Console.WriteLine($"Erro processando update: {ex}");
         }
+
+        return Task.CompletedTask;
     }
 }
