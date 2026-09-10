@@ -17,6 +17,37 @@ namespace PromoBot.Infrastructure.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
 
+            modelBuilder.Entity("PromoBot.Domain.Entities.BotSubscriber", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Id");
+
+                    b.Property<long>("ChatId")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("ChatId");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("IsActive");
+
+                    b.Property<DateTime>("SubscribedAt")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("SubscribedAt");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("UserName");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChatId")
+                        .IsUnique();
+
+                    b.ToTable("Subscribers", (string)null);
+                });
+
             modelBuilder.Entity("PromoBot.Domain.Entities.Promotion", b =>
                 {
                     b.Property<int>("Id")
