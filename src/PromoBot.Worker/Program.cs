@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using PromoBot.Application.Interfaces;
+using PromoBot.Application.Services;
 using PromoBot.Application.UseCases;
 using PromoBot.Domain.Entities;
 using PromoBot.Infrastructure.Persistence;
@@ -32,16 +33,20 @@ WTelegram.Helpers.Log = (_, message) =>
     Console.WriteLine(localMessage);
 };
 
+builder.Services.AddScoped<IBotSubscriberRepository, BotSubscribeRepository>();
+builder.Services.AddScoped<IBotSubscriptionService, BotSubscriptionService>();
 builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
-
-builder.Services.AddScoped<INotifier, SavedMessagesNotifier>();
-builder.Services.AddScoped<INotifier, TelegramBotNotifier>();
+builder.Services.AddScoped<ProcessIncomingMessageUseCase>();
 
 builder.Services.AddSingleton<ITelegramGateway, TelegramGateway>();
 
-builder.Services.AddScoped<ProcessIncomingMessageUseCase>();
+builder.Services.AddHttpClient<INotifier, TelegramBotNotifier>(client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
 
 builder.Services.AddHostedService<Worker>();
+builder.Services.AddHostedService<TelegramBotListenerWorker>();
 
 var host = builder.Build();
 
