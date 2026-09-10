@@ -22,29 +22,31 @@ public static partial class PriceExtractor
 
         foreach (Match match in matches)
         {
-            int start = Math.Max(0, match.Index - 25);
-            string beforeContext = text[start..match.Index];
+            var start = Math.Max(0, match.Index - 20);
+            var beforeContext = text.AsSpan(start, match.Index - start);
 
-            int end = Math.Min(text.Length, match.Index + match.Length + 15);
-            string afterContext = text[(match.Index + match.Length)..end];
+            var end = Math.Min(text.Length, match.Index + match.Length + 15);
+            var afterContext = text.AsSpan(match.Index + match.Length, end - (match.Index + match.Length));
 
-            bool isCouponBefore = beforeContext.Contains("cupom", StringComparison.OrdinalIgnoreCase) ||
-                                  beforeContext.Contains("desconto de", StringComparison.OrdinalIgnoreCase);
+            bool isDiscountValueBefore = beforeContext.Contains("cupom de", StringComparison.OrdinalIgnoreCase) ||
+                                        beforeContext.Contains("desconto de", StringComparison.OrdinalIgnoreCase) ||
+                                        beforeContext.Contains("vale de", StringComparison.OrdinalIgnoreCase) ||
+                                        beforeContext.TrimEnd().EndsWith("-");
 
-            bool isDiscountAfter = afterContext.Contains("off", StringComparison.OrdinalIgnoreCase) ||
-                                   afterContext.Contains("de desconto", StringComparison.OrdinalIgnoreCase);
+            bool isDiscountValueAfter = afterContext.Contains("de desconto", StringComparison.OrdinalIgnoreCase) ||
+                                       afterContext.Contains("off", StringComparison.OrdinalIgnoreCase);
 
-            if (isCouponBefore || isDiscountAfter)
+            if (isDiscountValueBefore || isDiscountValueAfter)
             {
                 continue; 
             }
 
-            string rawValue = match.Groups["valor"].Value;
-            if (decimal.TryParse(rawValue, NumberStyles.Number, PtBrCulture, out decimal price))
+            if (decimal.TryParse(match.Groups["valor"].ValueSpan, NumberStyles.Number, PtBrCulture, out decimal price))
             {
                 return price;
             }
         }
+
         return null;
     }
 }
