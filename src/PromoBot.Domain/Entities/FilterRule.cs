@@ -1,9 +1,8 @@
 using System.Globalization;
-using System.Text;
 
 namespace PromoBot.Domain.Entities;
 
-public record FilterRule
+public class FilterRule
 {
     public string KeyWord { get; init; } = string.Empty;
     public decimal? MaxPrice { get; init; }
@@ -23,10 +22,10 @@ public record FilterRule
         if (string.IsNullOrWhiteSpace(messageText) || string.IsNullOrWhiteSpace(KeyWord))
             return false;
 
-        var normalizedMessage = RemoveDiacritics(messageText);
-        var key = RemoveDiacritics(KeyWord);
-        bool containsText = normalizedMessage
-            .Contains(key, StringComparison.OrdinalIgnoreCase);
+        bool containsText = CultureInfo.InvariantCulture.CompareInfo.IndexOf(
+            messageText,
+            KeyWord,
+            CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace) >= 0;
         
         if (!containsText)
             return false;
@@ -35,23 +34,10 @@ public record FilterRule
             return true;
 
         var extractedPrice = extractPrice();
+
         if (!extractedPrice.HasValue)
-            return true;
+            return false;
         
         return extractedPrice.Value <= MaxPrice.Value;
-    }
-    
-    private static string RemoveDiacritics(string text)
-    {
-        string normalized = text.Normalize(NormalizationForm.FormD);
-        var sb = new StringBuilder(normalized.Length);
-
-        foreach (char c in normalized)
-        {
-            if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                sb.Append(c);
-        }
-
-        return sb.ToString().Normalize(NormalizationForm.FormC);
     }
 }
