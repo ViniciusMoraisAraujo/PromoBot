@@ -5,9 +5,11 @@
     
     <ItemGroup>
         <PackageVersion Include="WTelegramClient" Version="4.4.8" />
+        <PackageVersion Include="Telegram.Bot" Version="22.10.3"/>
         
         <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
         <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11" />
+        <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.11" />
         <PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.11" />
         <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.11" />
         <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.11" />
