@@ -483,3 +483,4 @@ $RECYCLE.BIN/
 
 *promobot.db*
 *appsettings.json
+*appsettings.Development.json
