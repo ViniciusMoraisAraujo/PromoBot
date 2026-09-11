@@ -1,4 +1,5 @@
 using System.Threading.Channels;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PromoBot.Application.Interfaces;
 using PromoBot.Domain.Models;
@@ -12,7 +13,7 @@ public class TelegramGateway : ITelegramGateway
     private readonly TelegramSettings _settings;
     private readonly HashSet<long> _targetChatIds;
     private readonly WTelegram.Client _client;
-
+    private readonly ILogger<TelegramGateway> _logger;
 
     private readonly Channel<IncomingMessage> _channel = Channel.CreateUnbounded<IncomingMessage>(
         new UnboundedChannelOptions
@@ -23,8 +24,9 @@ public class TelegramGateway : ITelegramGateway
     
     public ChannelReader<IncomingMessage>  Messages => _channel.Reader;
     
-    public TelegramGateway(IOptions<TelegramSettings> settings)
-    {
+    public TelegramGateway(IOptions<TelegramSettings> settings, ILogger<TelegramGateway> logger) 
+    { 
+        _logger = logger;
         _settings = settings.Value;
         _targetChatIds = settings.Value.TargetChatIds
             .Select(NormalizeChatId)
@@ -90,8 +92,7 @@ public class TelegramGateway : ITelegramGateway
         }
         catch (Exception ex)
         {
-            // TODO: logar de verdade (ILogger) — não deixar update engolir exceção silenciosa
-            Console.WriteLine($"Erro processando update: {ex}");
+            _logger.LogInformation("Falha ao processar update: {Exception}", ex);
         }
 
         return Task.CompletedTask;
