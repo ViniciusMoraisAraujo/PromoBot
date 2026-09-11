@@ -20,9 +20,12 @@ public class PromotionRepository(PromoBotDataContext context) : IPromotionReposi
             .AnyAsync(p => p.ChatId == chatId && p.MessageId == messageId, ct);
     }
 
-    public async Task UpdateAsync(Promotion promotion, CancellationToken ct)
+    public async Task<int> DeleteOlderPromotionThanAsync(DateTime cutoffDate, CancellationToken ct = default)
     {
-        _context.Promotions.Update(promotion);
-        await _context.SaveChangesAsync(ct);
+        var deleted = await _context.Promotions
+            .Where(p => p.PromotionDate < cutoffDate)
+            .ExecuteDeleteAsync(ct);
+
+        return deleted;
     }
 }

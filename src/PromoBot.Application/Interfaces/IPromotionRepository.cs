@@ -6,5 +6,5 @@ public interface IPromotionRepository
 {
     Task AddAsync(Promotion promotion, CancellationToken ct = default);
     Task<bool> ExistsAsync(long chatId, int messageId, CancellationToken ct = default);
-    Task UpdateAsync(Promotion promotion, CancellationToken ct);
+    Task<int> DeleteOlderPromotionThanAsync(DateTime cutoffDate, CancellationToken ct = default);
 }
